@@ -1,61 +1,44 @@
-# OmniPost AI - Social Media Management & AI Automation SaaS Platform
+This is an [OmniPost AI](https://omnipost.ai) SaaS project built with [Next.js 15](https://nextjs.org/).
 
-OmniPost AI is an enterprise-ready AI-powered Social Media Management Platform similar to Buffer, Hootsuite, Sprout Social, and Canva AI.
+## Getting Started
 
----
+First, run the development server:
 
-## ⚡ Quick Start & Why `http://localhost:3000` Requires the Local Server
+```bash
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
+```
 
-> **IMPORTANT NOTE ON `http://localhost:3000`**:  
-> `localhost:3000` is your **local development server URL**. It runs on your local machine. If the link does not open in your browser, it means the Next.js development server process is currently stopped. 
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-### How to Start the App Locally (3 Steps):
+You can start editing the project by modifying files in `src/app/page.tsx` or `src/app/(dashboard)/page.tsx`. The page auto-updates as you edit the file.
 
-1. Open your terminal inside the project directory:
-   ```bash
-   cd omnipost-ai
-   ```
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load Inter font.
 
-2. Install dependencies (if first time):
-   ```bash
-   npm install
-   ```
+## Project Structure
 
-3. Run the development server:
-   ```bash
-   npm run dev
-   ```
+- `src/app/(dashboard)/create` - Multi-Platform Post Creator & Live Previews
+- `src/app/(dashboard)/ai-studio` - Multi-LLM AI Studio (GPT-4o, Claude 3.5, Gemini 1.5, DeepSeek V3)
+- `src/app/(dashboard)/calendar` - Interactive Social Content Planner
+- `src/app/(dashboard)/inbox` - Unified Social Comments Inbox & AI Auto-Replies
+- `src/app/(dashboard)/analytics` - Multi-Channel Analytics & Performance Reports
+- `src/app/(dashboard)/integrations` - 10+ Social Media Platform Connections
 
-Once you see `✓ Ready in http://localhost:3000`, open **[http://localhost:3000](http://localhost:3000)** in your browser!
+## Learn More
 
----
+To learn more about the technologies used in OmniPost AI, take a look at the following resources:
 
-## 🚀 Live Public Deployment (Vercel)
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Prisma ORM Documentation](https://www.prisma.io/docs) - database schema & queries.
+- [Tailwind CSS Documentation](https://tailwindcss.com/docs) - modern styling guide.
 
-To get a permanent public link (e.g. `https://omnipost-ai.vercel.app`) that anyone can open anywhere:
+## Deploy on Vercel
 
-1. Push this project to your GitHub account.
-2. Go to **[Vercel.com](https://vercel.com)** and sign in with GitHub.
-3. Import `omnipost-ai` and click **Deploy**. Vercel will provide your live URL instantly!
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new) from the creators of Next.js.
 
----
-
-## ✨ Features Included
-
-- 🌐 **10+ Social Integrations**: Instagram, Facebook, LinkedIn, Twitter/X, Threads, Pinterest, TikTok, YouTube, Google Business, Mastodon.
-- 🤖 **Multi-LLM AI Studio**: Powered by GPT-4o, Claude 3.5 Sonnet, Gemini 1.5 Pro, and DeepSeek V3.
-- ✍️ **Multi-Platform Post Studio**: Live visual previews for Instagram, LinkedIn, X, Facebook, and Threads.
-- 📥 **Unified Comments Inbox**: Cross-network comment stream with inline AI auto-replies.
-- 📅 **Interactive Content Calendar**: Drag & drop scheduling matrix.
-- 📈 **Performance Telemetry**: Followers, Reach, Engagement CTR, Revenue analytics & CSV/PDF reports.
-- 🏢 **Multi-Organization & Team Roles**: Owner, Admin, Editor, Viewer access controls & Brand Kit.
-- 🛠️ **Growth Tools**: UTM Builder, Short Links, and QR Code Generator.
-
----
-
-## 🛠️ Tech Stack
-
-- **Framework**: Next.js 15 (App Router) + React 19 + TypeScript
-- **Styling**: Tailwind CSS + Framer Motion + Lucide Icons + Dark/Light Theme System
-- **Database Schema**: Prisma ORM with 22 models
-- **API**: Next.js API Route Handlers
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
