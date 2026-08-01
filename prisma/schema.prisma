@@ -1,0 +1,406 @@
+// Prisma Schema for OmniPost AI - Social Media Management & AI SaaS Platform
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum RoleType {
+  OWNER
+  ADMIN
+  EDITOR
+  VIEWER
+}
+
+enum SocialPlatform {
+  INSTAGRAM
+  FACEBOOK
+  LINKEDIN
+  TWITTER
+  THREADS
+  PINTEREST
+  TIKTOK
+  YOUTUBE
+  GOOGLE_BUSINESS
+  MASTODON
+}
+
+enum PostStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHING
+  PUBLISHED
+  FAILED
+  ARCHIVED
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  GIF
+  DOCUMENT
+  AUDIO
+}
+
+enum SubscriptionPlan {
+  FREE
+  STARTER
+  PROFESSIONAL
+  AGENCY
+  ENTERPRISE
+}
+
+enum NotificationType {
+  PUBLISH_SUCCESS
+  PUBLISH_FAILED
+  COMMENT_NEW
+  FOLLOWER_NEW
+  SUBSCRIPTION_ALERT
+  SYSTEM
+}
+
+enum AITaskType {
+  CAPTION_GENERATE
+  CAPTION_REWRITE
+  HASHTAG_GENERATE
+  IMAGE_GENERATE
+  TRANSLATE
+  SENTIMENT_ANALYSIS
+  ARTICLE_GENERATE
+  THREAD_GENERATE
+}
+
+model User {
+  id                String         @id @default(uuid())
+  email             String         @unique
+  name              String?
+  avatar            String?
+  passwordHash      String?
+  twoFactorEnabled  Boolean        @default(false)
+  timezone          String         @default("UTC")
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  // Relationships
+  organizationsOwned Organization[] @relation("OrgOwner")
+  memberships       TeamMember[]
+  posts             Post[]         @relation("AuthorPosts")
+  mediaItems        MediaLibrary[]
+  apiKeys           APIKey[]
+  notifications     Notification[]
+  activityLogs      ActivityLog[]
+  auditLogs         AuditLog[]
+  aiHistory         AIHistory[]
+}
+
+model Organization {
+  id            String           @id @default(uuid())
+  name          String
+  slug          String           @unique
+  logo          String?
+  brandColorPrimary   String?    @default("#6366f1")
+  brandColorSecondary String?    @default("#ec4899")
+  watermarkUrl  String?
+  timezone      String           @default("America/New_York")
+  language      String           @default("en")
+  ownerId       String
+  owner         User             @relation("OrgOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  plan          SubscriptionPlan @default(STARTER)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  // Relationships
+  workspaces    Workspace[]
+  teamMembers   TeamMember[]
+  socialAccounts SocialAccount[]
+  subscriptions Subscription[]
+  invoices      Invoice[]
+  apiKeys       APIKey[]
+  auditLogs     AuditLog[]
+}
+
+model Workspace {
+  id             String       @id @default(uuid())
+  name           String
+  description    String?
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  // Relationships
+  socialAccounts SocialAccount[]
+  posts          Post[]
+  folders        Folder[]
+  mediaItems     MediaLibrary[]
+  comments       Comment[]
+  analytics      Analytics[]
+}
+
+model TeamMember {
+  id             String       @id @default(uuid())
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  roleId         String
+  role           Role         @relation(fields: [roleId], references: [id])
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  assignedComments Comment[]  @relation("AssignedTo")
+}
+
+model Role {
+  id          String       @id @default(uuid())
+  name        String       // Owner, Admin, Editor, Viewer
+  roleType    RoleType     @default(EDITOR)
+  description String?
+  isSystem    Boolean      @default(false)
+  createdAt   DateTime     @default(now())
+
+  // Relationships
+  permissions Permission[]
+  teamMembers TeamMember[]
+}
+
+model Permission {
+  id          String   @id @default(uuid())
+  name        String   @unique // e.g. post.create, post.publish, account.connect
+  description String?
+  roles       Role[]
+}
+
+model SocialAccount {
+  id             String         @id @default(uuid())
+  platform       SocialPlatform
+  accountName    String
+  accountHandle  String
+  avatarUrl      String?
+  profileUrl     String?
+  accessToken    String
+  refreshToken   String?
+  tokenExpiresAt DateTime?
+  isConnected    Boolean        @default(true)
+  followersCount Int            @default(0)
+  organizationId String
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  workspaceId    String?
+  workspace      Workspace?     @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  posts          ScheduledPost[]
+  publishedPosts PublishedPost[]
+  comments       Comment[]
+  analytics      Analytics[]
+}
+
+model Post {
+  id             String       @id @default(uuid())
+  title          String?
+  content        String
+  richTextHtml   String?
+  platforms      SocialPlatform[]
+  status         PostStatus   @default(DRAFT)
+  mediaUrls      String[]
+  hashtags       String[]
+  authorId       String
+  author         User         @relation("AuthorPosts", fields: [authorId], references: [id])
+  workspaceId    String
+  workspace      Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  utmSource      String?
+  utmMedium      String?
+  utmCampaign    String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  scheduledPosts ScheduledPost[]
+  publishedPosts PublishedPost[]
+}
+
+model ScheduledPost {
+  id             String        @id @default(uuid())
+  postId         String
+  post           Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  socialAccountId String
+  socialAccount  SocialAccount @relation(fields: [socialAccountId], references: [id], onDelete: Cascade)
+  scheduledAt    DateTime
+  isRecurring    Boolean       @default(false)
+  recurrenceRule String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+}
+
+model PublishedPost {
+  id             String        @id @default(uuid())
+  postId         String
+  post           Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  socialAccountId String
+  socialAccount  SocialAccount @relation(fields: [socialAccountId], references: [id], onDelete: Cascade)
+  externalPostId String?
+  publishedAt    DateTime      @default(now())
+  likesCount     Int           @default(0)
+  commentsCount  Int           @default(0)
+  sharesCount    Int           @default(0)
+  reachCount     Int           @default(0)
+  clicksCount    Int           @default(0)
+}
+
+model MediaLibrary {
+  id             String      @id @default(uuid())
+  name           String
+  url            String
+  thumbnailUrl   String?
+  mediaType      MediaType   @default(IMAGE)
+  size           Int         // in bytes
+  dimensions     String?     // e.g. "1080x1080"
+  folderId       String?
+  folder         Folder?     @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  workspaceId    String
+  workspace      Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  uploaderId     String
+  uploader       User        @relation(fields: [uploaderId], references: [id])
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+}
+
+model Folder {
+  id          String         @id @default(uuid())
+  name        String
+  workspaceId String
+  workspace   Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  createdAt   DateTime       @default(now())
+
+  mediaItems  MediaLibrary[]
+}
+
+model Comment {
+  id             String        @id @default(uuid())
+  platform       SocialPlatform
+  externalId     String
+  authorName     String
+  authorAvatar   String?
+  content        String
+  isResolved     Boolean       @default(false)
+  socialAccountId String
+  socialAccount  SocialAccount @relation(fields: [socialAccountId], references: [id], onDelete: Cascade)
+  workspaceId    String
+  workspace      Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  assignedToId   String?
+  assignedTo     TeamMember?   @relation("AssignedTo", fields: [assignedToId], references: [id])
+  createdAt      DateTime      @default(now())
+
+  replies        Reply[]
+}
+
+model Reply {
+  id         String   @id @default(uuid())
+  commentId  String
+  comment    Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  content    String
+  isAIReply  Boolean  @default(false)
+  sentAt     DateTime @default(now())
+}
+
+model Analytics {
+  id             String        @id @default(uuid())
+  date           DateTime
+  platform       SocialPlatform
+  followers      Int           @default(0)
+  impressions    Int           @default(0)
+  reach          Int           @default(0)
+  engagementRate Float         @default(0.0)
+  clicks         Int           @default(0)
+  ctr            Float         @default(0.0)
+  socialAccountId String
+  socialAccount  SocialAccount @relation(fields: [socialAccountId], references: [id], onDelete: Cascade)
+  workspaceId    String
+  workspace      Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  title     String
+  message   String
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+}
+
+model AIHistory {
+  id           String     @id @default(uuid())
+  userId       String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  taskType     AITaskType
+  modelName    String     // e.g. "gpt-4o", "claude-3.5-sonnet", "gemini-1.5-pro", "deepseek-v3"
+  prompt       String
+  resultOutput String
+  tokensUsed   Int        @default(0)
+  createdAt    DateTime   @default(now())
+}
+
+model Subscription {
+  id                 String           @id @default(uuid())
+  organizationId     String
+  organization       Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  plan               SubscriptionPlan @default(STARTER)
+  status             String           @default("ACTIVE") // ACTIVE, CANCELED, PAST_DUE
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  cancelAtPeriodEnd  Boolean          @default(false)
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+}
+
+model Invoice {
+  id             String       @id @default(uuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  amountPaid     Int          // in cents
+  currency       String       @default("USD")
+  status         String       @default("PAID")
+  pdfUrl         String?
+  createdAt      DateTime     @default(now())
+}
+
+model APIKey {
+  id             String       @id @default(uuid())
+  name           String
+  key            String       @unique
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  lastUsedAt     DateTime?
+  expiresAt      DateTime?
+  createdAt      DateTime     @default(now())
+}
+
+model ActivityLog {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action    String
+  details   String?
+  ipAddress String?
+  createdAt DateTime @default(now())
+}
+
+model AuditLog {
+  id             String       @id @default(uuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action         String
+  resource       String
+  changes        String?      // JSON payload
+  createdAt      DateTime     @default(now())
+}
