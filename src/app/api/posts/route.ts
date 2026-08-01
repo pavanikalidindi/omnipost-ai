@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server"
 
+export const dynamic = "force-dynamic"
+
 // Mock store for dynamic runtime API testing
 let mockPosts: any[] = [
   {

@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server"
+
+export const dynamic = "force-dynamic"
 import { generateAICaption, generateTwitterThread, generateCarouselSlides, generateAIImagePrompt } from "@/lib/ai-providers"
 
 export async function POST(req: Request) {
